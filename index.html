@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>周杰伦限定珍藏DEMO空间</title>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      color: white;
+      font-size: 3vw;
+      font-weight: 700;
+      height: 300px;
+      line-height: 300px;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      background-color: #ddd;
+      cursor: pointer;
+    }
+
+    .play-button {
+      cursor: pointer;
+    }
+
+    .audio-player-container {
+      display: none;
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .audio-player-container.show {
+      display: block;
+    }
+
+    .audio-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .lyrics {
+      margin-top: 20px;
+      max-height: 60px; /* 设置为两行歌词的高度 */
+      overflow-y: hidden; /* 隐藏超出部分 */
+      line-height: 30px;  /* 每行歌词的高度 */
+      position: relative; /* 为了使用绝对定位的子元素 */
+    }
+
+    .lyrics p {
+      color: gray;
+      transition: color 0.3s, font-weight 0.3s;
+      margin: 0;
+    }
+
+    .lyrics .current-lyric {
+      color: black;
+      font-weight: bold;
+    }
+
+    @media (max-width: 500px) {
+      header {
+        font-size: 5vw;
+        height: 40vw;
+        line-height: 40vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>特别发行《周杰伦限定珍藏DEMO空间》</header>
+  <div class="audio-player-container" id="audioPlayerContainer">
+    <div class="audio-title" id="audioTitle">无歌曲播放</div>
+    <audio id="audioPlayer" controls></audio>
+    <div class="lyrics" id="lyricsContainer"></div>
+  </div>
+  <main>
+    <p>发行日期：2022年08月29日</p>
+    <p>发行公司：⑨ 2022 JVR Music International Ltd. &amp; 薄盒Mints</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>艺术家</th>
+          <th>歌曲名称</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="01. 周杰伦 - 青花瓷 DEMO">
+          <td>周杰伦</td>
+          <td>青花瓷 DEMO</td>
+          <td><span class="play-button">▶️</span></td>
+        </tr>
+        <tr id="02. 周杰伦 - 晴天 DEMO">
+          <td>周杰伦</td>
+          <td>晴天 DEMO</td>
+          <td><span class="play-button">▶️</span></td>
+        </tr>
+        <tr id="03. 周杰伦 - 搁浅 DEMO">
+          <td>周杰伦</td>
+          <td>搁浅 DEMO</td>
+          <td><span class="play-button">▶️</span></td>
+        </tr>
+        <tr id="04. 周杰伦 - 爱在西元前 DEMO">
+          <td>周杰伦</td>
+          <td>爱在西元前 DEMO</td>
+          <td><span class="play-button">▶️</span></td>
+        </tr>
+        <tr id="05. 周杰伦 - 纽约地铁 DEMO">
+          <td>周杰伦</td>
+          <td>纽约地铁 DEMO</td>
+          <td><span class="play-button">▶️</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    const audioPlayer = document.getElementById("audioPlayer");
+    const audioPlayerContainer = document.getElementById("audioPlayerContainer");
+    const audioTitle = document.getElementById("audioTitle");
+    const lyricsContainer = document.getElementById("lyricsContainer");
+
+    let currentPlayingRow = null;
+    let currentLyrics = [];
+    let currentLyricIndex = 0;
+
+    function updatePlayButton(row, isPlaying) {
+      const playButton = row.querySelector(".play-button");
+      if (isPlaying) {
+        playButton.textContent = "⏸️";
+      } else {
+        playButton.textContent = "▶️";
+      }
+    }
+
+    function playSong(row) {
+      const songId = row.id;
+      const songUrl = `music/${songId}.mp3`;
+
+      if (currentPlayingRow && currentPlayingRow !== row) {
+        pauseSong(currentPlayingRow);
+      }
+
+      audioPlayer.src = songUrl;
+      audioPlayer.play().catch((error) => {
+        console.error("Error attempting to play", error);
+      });
+      currentPlayingRow = row;
+      audioPlayerContainer.classList.add("show");
+      audioTitle.textContent = row.querySelector("td:nth-child(2)").textContent;
+      updatePlayButton(row, true);
+
+      // 显示歌词
+      showLyrics(songId);
+
+      audioPlayer.onended = function () {
+        audioPlayerContainer.classList.remove("show");
+        audioTitle.textContent = "无歌曲播放";
+        updatePlayButton(row, false);
+        currentPlayingRow = null;
+        hideLyrics();
+      };
+
+      // 更新歌词
+      audioPlayer.ontimeupdate = function () {
+        updateLyrics(audioPlayer.currentTime);
+      };
+    }
+
+    function pauseSong(row) {
+      if (audioPlayer.paused) return;
+      audioPlayer.pause();
+      updatePlayButton(row, false);
+    }
+
+    function showLyrics(songId) {
+      // 根据歌曲ID显示对应的歌词
+      switch (songId) {
+        case "01. 周杰伦 - 青花瓷 DEMO":
+          currentLyrics = [
+            { time: 0, text: "素胚勾勒出青花笔锋浓转淡..." },
+            { time: 5, text: "瓶身描绘的牡丹一如你初妆..." },
+            { time: 10, text: "冉冉檀香透过窗心事我了然..." },
+            { time: 15, text: "故事的小黄花从出生那年就飘着..." },
+            { time: 20, text: "童年的荡秋千随记忆一直晃到现在..." },
+            { time: 25, text: "Re So So Si Do Si La..." },
+          ];
+          break;
+        case "02. 周杰伦 - 晴天 DEMO":
+          currentLyrics = [
+            { time: 0, text: "故事的小黄花从出生那年就飘着..." },
+            { time: 5, text: "童年的荡秋千随记忆一直晃到现在..." },
+            { time: 10, text: "Re So So Si Do Si La..." },
+          ];
+          break;
+        case "03. 周杰伦 - 搁浅 DEMO":
+          currentLyrics = [
+            { time: 0, text: "久未放晴的天空依旧留着你的笑容..." },
+            { time: 5, text: "泪滑过我的脸庞停不住..." },
+            { time: 10, text: "微笑的表情有一点不自然..." },
+          ];
+          break;
+        case "04. 周杰伦 - 爱在西元前 DEMO":
+          currentLyrics = [
+            { time: 0, text: "古巴比伦王颁布了汉谟拉比法典..." },
+            { time: 5, text: "刻在黑色的玄武岩距今已经三千七百多年..." },
+            { time: 10, text: "你在橱窗前凝视碑文的字眼..." },
+          ];
+          break;
+        case "05. 周杰伦 - 纽约地铁 DEMO":
+          currentLyrics = [
+            { time: 0, text: "无歌词" },
+          ];
+          break;
+        default:
+          currentLyrics = [];
+      }
+
+      renderLyrics();
+      lyricsContainer.classList.add("show");
+    }
+
+    function hideLyrics() {
+      lyricsContainer.classList.remove("show");
+    }
+
+    function renderLyrics() {
+      lyricsContainer.innerHTML = `
+        ${currentLyrics
+          .map(
+            (lyric) =>
+              `<p data-time="${lyric.time}">${lyric.text}</p>`
+          )
+          .join("")}
+      `;
+    }
+
+    function updateLyrics(currentTime) {
+      const lyricsLines = Array.from(lyricsContainer.querySelectorAll("p"));
+      let currentIndex = 0;
+
+      // 移除所有歌词行的 current-lyric 类
+      lyricsLines.forEach(line => line.classList.remove('current-lyric'));
+
+      for (let i = 0; i < lyricsLines.length; i++) {
+        const lyricLine = lyricsLines[i];
+        const lyricTime = parseFloat(lyricLine.getAttribute("data-time"));
+
+        if (currentTime >= lyricTime) {
+          currentIndex = i;
+        }
+      }
+
+      // 高亮当前和下一行歌词
+      for (let i = 0; i < lyricsLines.length; i++) {
+        const lyricLine = lyricsLines[i];
+        if (i === currentIndex || i === currentIndex + 1) {
+          if (i === currentIndex) {
+            lyricLine.classList.add('current-lyric'); // 当前行加粗并变黑
+          }
+          lyricLine.style.display = 'block'; // 显示当前和下一行歌词
+        } else {
+          lyricLine.style.display = 'none'; // 其他行隐藏
+        }
+      }
+
+      // 计算需要滚动的距离
+      const currentLyricElement = lyricsContainer.querySelector('.current-lyric');
+      if (currentLyricElement) {
+        // 将当前歌词行滚动到容器顶部
+        const elementTop = currentLyricElement.offsetTop;
+        const containerHeight = lyricsContainer.clientHeight;
+        const elementHeight = currentLyricElement.offsetHeight;
+
+        // 确保当前歌词行紧贴容器顶部
+        let scrollTop = 0;
+
+        // 如果当前歌词是最后一句，确保它紧贴容器顶部
+        if (currentIndex === lyricsLines.length - 1) {
+          scrollTop = Math.max(0, elementTop - (containerHeight - elementHeight));
+        } else {
+          scrollTop = elementTop - (containerHeight / 2 - elementHeight);
+        }
+
+        lyricsContainer.scrollTop = scrollTop;
+      }
+    }
+
+    document.querySelectorAll("tbody tr").forEach((row) => {
+      row.addEventListener("click", function () {
+        if (this === currentPlayingRow) {
+          pauseSong(this);
+        } else {
+          playSong(this);
+        }
+      });
+    });
+
+    audioPlayer.addEventListener("pause", function () {
+      if (currentPlayingRow) {
+        updatePlayButton(currentPlayingRow, false);
+      }
+    });
+
+    audioPlayer.addEventListener("play", function () {
+      if (currentPlayingRow) {
+        updatePlayButton(currentPlayingRow, true);
+      }
+    });
+
+    audioPlayer.ontimeupdate = function () {
+      if (audioPlayer.played.length > 0) {
+        updateLyrics(audioPlayer.currentTime);
+      }
+    };
+
+    audioPlayer.onended = function () {
+      audioPlayerContainer.classList.remove("show");
+      audioTitle.textContent = "无歌曲播放";
+      if (currentPlayingRow) {
+        updatePlayButton(currentPlayingRow, false);
+      }
+      currentPlayingRow = null;
+      hideLyrics();
+    };
+  </script>
+</body>
+</html>
